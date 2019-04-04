@@ -1,0 +1,4 @@
+# Start by ignoring everything by default
+js/**/*.js
+# # Enable linting just for some files
+# !main.js

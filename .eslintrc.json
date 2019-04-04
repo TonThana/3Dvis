@@ -1,0 +1,13 @@
+{
+    "extends": "airbnb-base",
+    "rules": {
+        "no-console": "off",
+        "no-restricted-syntax": "off",
+        "guard-for-in": "off",
+        "no-param-reassign": "off",
+        "prefer-spread": "off",
+        "max-len": "off",
+        "no-restricted-properties": "off",
+        "prefer-destructuring": "off"
+    }
+}
