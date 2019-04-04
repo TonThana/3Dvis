@@ -24,8 +24,11 @@
 
         <!-- Contains Lookup Tables for the Marching Cubes Algorithm -->
         <script src="js/MarchingCubesData.js"></script>
-        <script src="js/dti_data.js"></script>
+        <script src="data/dti_data.js"></script>
+        <script src="data/CCP.js"></script>
+        <script src="data/CCP_pt.js"></script>
         <div id="CANVAS" style="position:absolute;left:0px;top: 0px"></div>
+
         <script>
             var container, scene, camera, renderer, controls, stats;
             var keyboard = new THREEx.KeyboardState();
@@ -38,7 +41,8 @@
             init();
             animate();
 
-            function formatData() {
+            function formatData(data) {
+                points = [];
                 for (
                     let sliceNumber = 0;
                     sliceNumber < numberOfSlices;
@@ -48,81 +52,25 @@
                     for (let y = 0; y < size; y += 1) {
                         let oneRow = [];
                         for (let x = 0; x < size; x += 1) {
-                            oneRow.push(
-                                dti_data[x + y * size + sliceNumber * size]
-                            );
+                            // oneRow.push(
+                            //     data[x + y * size + sliceNumber * size]
+                            // );
                             points.push(new THREE.Vector3(x, y, sliceNumber));
                         }
-                        oneSlice.push(oneRow);
+                        // oneSlice.push(oneRow);
                     }
-                    formattedData.push(oneSlice);
+                    // formattedData.push(oneSlice);
                 }
-                console.log(formattedData);
-                return formattedData;
+                return points;
+                // return formattedData;
             }
 
-            function init() {
-                scene = new THREE.Scene();
-                // CAMERA
-                var SCREEN_WIDTH = window.innerWidth,
-                    SCREEN_HEIGHT = window.innerHeight;
-                var VIEW_ANGLE = 45,
-                    ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT,
-                    NEAR = 10,
-                    FAR = 20000;
-                camera = new THREE.PerspectiveCamera(
-                    VIEW_ANGLE,
-                    ASPECT,
-                    NEAR,
-                    FAR
-                );
-                scene.add(camera);
-                camera.position.set(120, 120, 120);
-                camera.lookAt(scene.position);
-                camera.up = new THREE.Vector3(0, 0, 1);
-                // RENDERER
-                if (Detector.webgl)
-                    renderer = new THREE.WebGLRenderer({ antialias: true });
-                else renderer = new THREE.CanvasRenderer();
-                renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
-                container = document.getElementById("CANVAS");
-                container.appendChild(renderer.domElement);
-                // EVENTS
-                THREEx.WindowResize(renderer, camera);
-                THREEx.FullScreen.bindKey({ charCode: "m".charCodeAt(0) });
-                //CONTROLS
-                controls = new THREE.TrackballControls(camera);
-                controls.rotateSpeed = 1.0;
-                controls.zoomSpeed = 1.2;
-                controls.panSpeed = 0.8;
-                controls.noZoom = false;
-                controls.noPan = false;
-                controls.staticMoving = true;
-                controls.dynamicDampingFactor = 0.3;
-                controls.keys = [65, 83, 68];
-                // controls.addEventListener("change", render);
-                // STATS
-                stats = new Stats();
-                stats.domElement.style.position = "absolute";
-                stats.domElement.style.bottom = "0px";
-                stats.domElement.style.zIndex = 100;
-                container.appendChild(stats.domElement);
-                // LIGHT
-                var light = new THREE.HemisphereLight(0xffffbb, 0x080820, 1);
-                scene.add(light);
-                // AXES
-                scene.add(new THREE.AxesHelper(200));
-                //
-                size = 128;
-
-                var size2 = size * size;
-
-                numberOfSlices = 70;
-                formatData(dti_data);
+            function marchingCube(data, isolevel) {
+                formatData(data);
                 var vlist = new Array(12);
                 var geometry = new THREE.Geometry();
                 var vertexIndex = 0;
-
+                var size2 = size * size;
                 for (var z = 0; z < numberOfSlices - 1; z++)
                     for (var y = 0; y < size - 1; y++)
                         for (var x = 0; x < size - 1; x++) {
@@ -137,19 +85,19 @@
                                 pxyz = pxy + size2;
 
                             // store scalar values corresponding to vertices
-                            var value0 = dti_data[p],
-                                value1 = dti_data[px],
-                                value2 = dti_data[py],
-                                value3 = dti_data[pxy],
-                                value4 = dti_data[pz],
-                                value5 = dti_data[pxz],
-                                value6 = dti_data[pyz],
-                                value7 = dti_data[pxyz];
+                            var value0 = data[p],
+                                value1 = data[px],
+                                value2 = data[py],
+                                value3 = data[pxy],
+                                value4 = data[pz],
+                                value5 = data[pxz],
+                                value6 = data[pyz],
+                                value7 = data[pxyz];
 
                             // place a "1" in bit positions corresponding to vertices whose
                             //   isovalue is less than given constant.
 
-                            var isolevel = 1;
+                            var isolevel = isolevel;
 
                             var cubeindex = 0;
                             if (value0 < isolevel) cubeindex |= 1;
@@ -310,7 +258,7 @@
                                 geometry.faceVertexUvs[0].push([
                                     new THREE.Vector2(0, 0),
                                     new THREE.Vector2(0, 1),
-                                    new THREE.Vector2(1, 1),
+                                    new THREE.Vector2(1, 1)
                                 ]);
 
                                 vertexIndex += 3;
@@ -323,9 +271,128 @@
                 // geometry.computeFaceNormals();
                 geometry.computeVertexNormals();
                 geometry.translate(-64, -64, -35);
-                var colorMaterial = new THREE.MeshNormalMaterial();
-                var mesh = new THREE.Mesh(geometry, colorMaterial);
-                scene.add(mesh);
+
+                ///////////////////////////////////////////////////
+                // SUBDIVISION MODIFIER TO INCREASE THE VERTICES //
+                ///////////////////////////////////////////////////
+                // var modifier = new THREE.SubdivisionModifier(1);
+                // geometry = modifier.modify(geometry);
+
+                // var colorMaterial = new THREE.MeshStandardMaterial({
+                //     opacity: 0.45,
+                //     transparent: true,
+                //     color: 0x00faca,
+                //     premultipliedAlpha: true
+                // });
+
+                // var mesh = new THREE.Mesh(geometry, colorMaterial);
+                // scene.add(mesh);
+                return geometry;
+            }
+
+            function init() {
+                scene = new THREE.Scene();
+                // CAMERA
+                var SCREEN_WIDTH = window.innerWidth,
+                    SCREEN_HEIGHT = window.innerHeight;
+                var VIEW_ANGLE = 45,
+                    ASPECT = SCREEN_WIDTH / SCREEN_HEIGHT,
+                    NEAR = 10,
+                    FAR = 20000;
+                camera = new THREE.PerspectiveCamera(
+                    VIEW_ANGLE,
+                    ASPECT,
+                    NEAR,
+                    FAR
+                );
+                scene.add(camera);
+                camera.position.set(120, 120, 120);
+                camera.lookAt(scene.position);
+                camera.up = new THREE.Vector3(0, 0, 1);
+                // RENDERER
+                if (Detector.webgl)
+                    renderer = new THREE.WebGLRenderer({ antialias: true });
+                else renderer = new THREE.CanvasRenderer();
+                renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+                container = document.getElementById("CANVAS");
+                container.appendChild(renderer.domElement);
+                // EVENTS
+                THREEx.WindowResize(renderer, camera);
+                THREEx.FullScreen.bindKey({ charCode: "m".charCodeAt(0) });
+                //CONTROLS
+                controls = new THREE.TrackballControls(camera);
+                controls.rotateSpeed = 1.0;
+                controls.zoomSpeed = 1.2;
+                controls.panSpeed = 0.8;
+                controls.noZoom = false;
+                controls.noPan = false;
+                controls.staticMoving = true;
+                controls.dynamicDampingFactor = 0.3;
+                controls.keys = [65, 83, 68];
+                // controls.addEventListener( 'change', light_update );
+                // controls.addEventListener("change", render);
+                // STATS
+                stats = new Stats();
+                stats.domElement.style.position = "absolute";
+                stats.domElement.style.bottom = "0px";
+                stats.domElement.style.zIndex = 100;
+                container.appendChild(stats.domElement);
+                // LIGHT
+                var directionalLight = new THREE.DirectionalLight(
+                    0xffffff,
+                    0.5
+                );
+                scene.add(directionalLight);
+
+                // AXES
+                scene.add(new THREE.AxesHelper(200));
+                //
+                var modifier = new THREE.SubdivisionModifier(1);
+
+                size = 128;
+                numberOfSlices = 70;
+                var group = new THREE.Group();
+                var BRAIN = marchingCube(dti_data, 8);
+                var CCP = marchingCube(CCP_roi, 1);
+                var CCP_PT = marchingCube(CCP_pt, 10);
+                CCP = modifier.modify(CCP);
+                CCP_PT = modifier.modify(CCP_PT);
+
+                var brainMaterial = new THREE.MeshBasicMaterial({
+                    opacity: 0.25,
+                    transparent: true,
+                    color: 0x00faca,
+                    // wireframe: true,
+                    // wireframeLinewidth: 0.5,
+                    // wireframeLinejoin: 'round',
+                    // wireframeLinecap: 'round',
+                    side: THREE.BackSide
+                });
+
+                var CCPMaterial = new THREE.MeshPhongMaterial({
+                    opacity: 1,
+                    transparent: false,
+                    color: 0xfa0000
+                });
+
+                var CCPPTMaterial = new THREE.MeshBasicMaterial({
+                    opacity: 0.1,
+                    transparent: true,
+                    color: 0xef2d6c,
+                    wireframe: true,
+                    wireframeLinewidth: 2,
+                    wireframeLinejoin: "round",
+                    wireframeLinecap: "round",
+                    side: THREE.BackSide
+                });
+
+                var brainMesh = new THREE.Mesh(BRAIN, brainMaterial);
+                var CCPMesh = new THREE.Mesh(CCP, CCPMaterial);
+                var CCPPTMesh = new THREE.Mesh(CCP_PT, CCPPTMaterial);
+                group.add(brainMesh);
+                group.add(CCPMesh);
+                group.add(CCPPTMesh);
+                scene.add(group);
             }
             function VertexInterp(isolevel, p1, p2, valp1, valp2) {
                 let p = new THREE.Vector3();
