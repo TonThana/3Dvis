@@ -5,4 +5,3 @@
 .jshint*
 node_modules/
 release.sh
-data/
