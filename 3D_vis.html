@@ -24,6 +24,7 @@
 
         <!-- Contains Lookup Tables for the Marching Cubes Algorithm -->
         <script src="js/MarchingCubesData.js"></script>
+        <!-- DATA -->
         <script src="data/dti_data.js"></script>
         <script src="data/CCP.js"></script>
         <script src="data/CCP_pt.js"></script>
@@ -458,13 +459,6 @@
                 }
 
                 var BRAIN = marchingCube(dti_data, 8);
-
-                // CCP = modifier.modify(CCP);
-                // CCP_PT = modifier.modify(CCP_PT);
-                // DL_L = modifier.modify(DL_L);
-                // DL_R = modifier.modify(DL_R);
-                // DL_L_PT = modifier.modify(DL_L_PT);
-                // DL_R_PT = modifier.modify(DL_R_PT);
 
                 var brainMaterial = new THREE.MeshBasicMaterial({
                     opacity: 0.25,
