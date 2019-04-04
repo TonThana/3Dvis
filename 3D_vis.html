@@ -27,6 +27,10 @@
         <script src="data/dti_data.js"></script>
         <script src="data/CCP.js"></script>
         <script src="data/CCP_pt.js"></script>
+        <script src="data/DL_L.js"></script>
+        <script src="data/DL_R.js"></script>
+        <script src="data/DL_L_pt.js"></script>
+        <script src="data/DL_R_pt.js"></script>
         <div id="CANVAS" style="position:absolute;left:0px;top: 0px"></div>
 
         <script>
@@ -272,7 +276,7 @@
 
                 // geometry.computeCentroids();
 
-                // geometry.computeFaceNormals();
+                geometry.computeFaceNormals();
                 geometry.computeVertexNormals();
                 geometry.translate(-64, -64, -35);
 
@@ -357,11 +361,19 @@
                 numberOfSlices = 70;
                 var group = new THREE.Group();
                 var BRAIN = marchingCube(dti_data, 8);
-                var CCP = marchingCube(CCP_roi, 1);
+                var CCP = marchingCube(CCP_roi, 254);
                 var CCP_PT = marchingCube(CCP_pt, 10);
+                var DL_L_PT = marchingCube( DL_L_pt, 5);
+                var DL_R_PT = marchingCube( DL_R_pt, 5);
+                var DL_L = marchingCube(DL_L_roi, 254);
+                var DL_R = marchingCube(DL_R_roi, 254);
                 CCP = modifier.modify(CCP);
                 CCP_PT = modifier.modify(CCP_PT);
-
+                DL_L = modifier.modify(DL_L);
+                DL_R = modifier.modify(DL_R);
+                DL_L_PT = modifier.modify(DL_L_PT);
+                DL_R_PT = modifier.modify(DL_R_PT);
+                
                 var brainMaterial = new THREE.MeshBasicMaterial({
                     opacity: 0.25,
                     transparent: true,
@@ -373,7 +385,7 @@
                     side: THREE.BackSide
                 });
 
-                var CCPMaterial = new THREE.MeshPhongMaterial({
+                var CCPMaterial = new THREE.MeshBasicMaterial({
                     opacity: 1,
                     transparent: false,
                     color: 0xfa0000
@@ -390,15 +402,53 @@
                     side: THREE.BackSide
                 });
 
+                var DL_L_Mat = new THREE.MeshBasicMaterial({
+                    opacity: 1,
+                    transparent: false,
+                    color: 0x07F356
+                });
+
+                var DL_R_Mat = new THREE.MeshBasicMaterial({
+                    opacity: 1,
+                    transparent: false,
+                    color: 0x07DBF3
+                });
+
+                var DL_L_PT_Mat = new THREE.MeshBasicMaterial({
+                    opacity: 0.1,
+                    transparent: true,
+                    color:  0x07F356,
+                    wireframe: true,
+                    wireframeLinewidth: 2,
+                    wireframeLinejoin: "round",
+                    wireframeLinecap: "round",
+                    side: THREE.BackSide
+                });
+                var DL_R_PT_Mat = new THREE.MeshBasicMaterial({
+                    opacity: 0.1,
+                    transparent: true,
+                    color: 0x07DBF3,
+                    wireframe: true,
+                    wireframeLinewidth: 2,
+                    wireframeLinejoin: "round",
+                    wireframeLinecap: "round",
+                    side: THREE.BackSide
+                });
+
                 var brainMesh = new THREE.Mesh(BRAIN, brainMaterial);
+                brainMesh.name = 'BRAIN'
                 var CCPMesh = new THREE.Mesh(CCP, CCPMaterial);
                 CCPMesh.name = "CCP ROI";
                 var CCPPTMesh = new THREE.Mesh(CCP_PT, CCPPTMaterial);
                 CCPPTMesh.name = "CCP PT";
-                raycastedObj.push(CCPMesh, CCPPTMesh);
+                var DL_L_Mesh = new THREE.Mesh(DL_L, DL_L_Mat);
+                var DL_R_Mesh = new THREE.Mesh(DL_R, DL_R_Mat);
+                var DL_L_PT_Mesh = new THREE.Mesh(DL_L_PT, DL_L_PT_Mat);
+                var DL_R_PT_Mesh = new THREE.Mesh(DL_R_PT, DL_R_PT_Mat);
+                raycastedObj.push(CCPPTMesh, DL_L_PT_Mesh, DL_R_PT_Mesh);
                 group.add(brainMesh);
-                group.add(CCPMesh);
-                group.add(CCPPTMesh);
+                group.add(CCPMesh, DL_L_Mesh, DL_R_Mesh);
+                group.add(CCPPTMesh,DL_L_PT_Mesh,DL_R_PT_Mesh  );
                 console.log(group);
                 scene.add(group);
             }
