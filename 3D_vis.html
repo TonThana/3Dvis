@@ -38,6 +38,10 @@
             var points = [];
             var numberOfSlices;
             var size;
+            var raycaster = new THREE.Raycaster();
+            var raycastedObj = [];
+            var INTERSECTED;
+            var mouse = new THREE.Vector2();
             init();
             animate();
 
@@ -388,10 +392,14 @@
 
                 var brainMesh = new THREE.Mesh(BRAIN, brainMaterial);
                 var CCPMesh = new THREE.Mesh(CCP, CCPMaterial);
+                CCPMesh.name = "CCP ROI";
                 var CCPPTMesh = new THREE.Mesh(CCP_PT, CCPPTMaterial);
+                CCPPTMesh.name = "CCP PT";
+                raycastedObj.push(CCPMesh, CCPPTMesh);
                 group.add(brainMesh);
                 group.add(CCPMesh);
                 group.add(CCPPTMesh);
+                console.log(group);
                 scene.add(group);
             }
             function VertexInterp(isolevel, p1, p2, valp1, valp2) {
@@ -423,9 +431,69 @@
                 stats.update();
             }
 
+            function onMouseMove(event) {
+                // calculate mouse position in normalized device coordinates
+                // (-1 to +1) for both components
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+                // RAYCASTER FOR SELECTION
+                raycaster.setFromCamera(mouse, camera);
+                var intersects = raycaster.intersectObjects(raycastedObj);
+
+                if (intersects.length > 0) {
+                    // if the closest object intersected is not the currently stored intersection object
+                    if (intersects[0].object != INTERSECTED) {
+                        // restore previous intersection object (if it exists) to its original color
+                        if (INTERSECTED)
+                            INTERSECTED.material.color.setHex(
+                                INTERSECTED.currentHex
+                            );
+                        // store reference to closest object as current intersection object
+                        INTERSECTED = intersects[0].object;
+                        // store color of closest object (for later restoration)
+                        INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
+                        // set a new color for closest object
+                        INTERSECTED.material.color.setHex(0xffff00);
+                    }
+                } // there are no intersections
+                else {
+                    // restore previous intersection object (if it exists) to its original color
+                    if (INTERSECTED)
+                        INTERSECTED.material.color.setHex(
+                            INTERSECTED.currentHex
+                        );
+                    // remove previous intersection object reference
+                    //     by setting current intersection object to "nothing"
+                    INTERSECTED = null;
+                }
+            }
+
+            const tMouseMove = throttled(200, onMouseMove);
+
+            function throttled(delay, fn) {
+                let lastCall = 0;
+                return function(...args) {
+                    const now = new Date().getTime();
+                    if (now - lastCall < delay) {
+                        return;
+                    }
+                    lastCall = now;
+                    return fn(...args);
+                };
+            }
+
             function render() {
+                // raycaster.setFromCamera(mouse, camera);
+                // var intersects = raycaster.intersectObjects(scene.children);
+                // console.log(intersects);
+                // for (var i = 0; i < intersects.length; i++) {
+                //     intersects[i].object.material.color.set(0xff0000);
+                // }
                 renderer.render(scene, camera);
             }
+
+            container.addEventListener("mousemove", tMouseMove, false);
         </script>
     </body>
 </html>
