@@ -266,7 +266,7 @@
                                 geometry.faceVertexUvs[0].push([
                                     new THREE.Vector2(0, 0),
                                     new THREE.Vector2(0, 1),
-                                    new THREE.Vector2(1, 1)
+                                    new THREE.Vector2(1, 1),
                                 ]);
 
                                 vertexIndex += 3;
@@ -331,7 +331,7 @@
                 controls = new THREE.TrackballControls(camera);
                 controls.rotateSpeed = 1.0;
                 controls.zoomSpeed = 1.2;
-                controls.panSpeed = 0.8;
+                controls.panSpeed = 10;
                 controls.noZoom = false;
                 controls.noPan = false;
                 controls.staticMoving = true;
@@ -359,99 +359,128 @@
 
                 size = 128;
                 numberOfSlices = 70;
-                var group = new THREE.Group();
-                var BRAIN = marchingCube(dti_data, 8);
-                var CCP = marchingCube(CCP_roi, 254);
-                var CCP_PT = marchingCube(CCP_pt, 10);
-                var DL_L_PT = marchingCube( DL_L_pt, 5);
-                var DL_R_PT = marchingCube( DL_R_pt, 5);
-                var DL_L = marchingCube(DL_L_roi, 254);
-                var DL_R = marchingCube(DL_R_roi, 254);
-                CCP = modifier.modify(CCP);
-                CCP_PT = modifier.modify(CCP_PT);
-                DL_L = modifier.modify(DL_L);
-                DL_R = modifier.modify(DL_R);
-                DL_L_PT = modifier.modify(DL_L_PT);
-                DL_R_PT = modifier.modify(DL_R_PT);
-                
-                var brainMaterial = new THREE.MeshBasicMaterial({
-                    opacity: 0.25,
-                    transparent: true,
-                    color: 0x00faca,
-                    // wireframe: true,
-                    // wireframeLinewidth: 0.5,
-                    // wireframeLinejoin: 'round',
-                    // wireframeLinecap: 'round',
-                    side: THREE.BackSide
-                });
 
-                var CCPMaterial = new THREE.MeshBasicMaterial({
+                var group = new THREE.Group();
+
+                var CCP_Mat = new THREE.MeshBasicMaterial({
                     opacity: 1,
                     transparent: false,
-                    color: 0xfa0000
+                    color: 0xfa0000,
                 });
-
-                var CCPPTMaterial = new THREE.MeshBasicMaterial({
+                var CCP_PT_Mat = new THREE.MeshBasicMaterial({
                     opacity: 0.1,
                     transparent: true,
-                    color: 0xef2d6c,
+                    color: 0xf8a1e4,
                     wireframe: true,
-                    wireframeLinewidth: 2,
+                    wireframeLinewidth: 2.5,
                     wireframeLinejoin: "round",
                     wireframeLinecap: "round",
-                    side: THREE.BackSide
+                    side: THREE.BackSide,
                 });
 
                 var DL_L_Mat = new THREE.MeshBasicMaterial({
                     opacity: 1,
                     transparent: false,
-                    color: 0x07F356
+                    color: 0x07f356,
                 });
 
                 var DL_R_Mat = new THREE.MeshBasicMaterial({
                     opacity: 1,
                     transparent: false,
-                    color: 0x07DBF3
+                    color: 0x07dbf3,
                 });
 
                 var DL_L_PT_Mat = new THREE.MeshBasicMaterial({
                     opacity: 0.1,
                     transparent: true,
-                    color:  0x07F356,
+                    color: 0x07f356,
                     wireframe: true,
-                    wireframeLinewidth: 2,
+                    wireframeLinewidth: 2.5,
                     wireframeLinejoin: "round",
                     wireframeLinecap: "round",
-                    side: THREE.BackSide
+                    side: THREE.BackSide,
                 });
                 var DL_R_PT_Mat = new THREE.MeshBasicMaterial({
                     opacity: 0.1,
                     transparent: true,
-                    color: 0x07DBF3,
+                    color: 0x07dbf3,
                     wireframe: true,
-                    wireframeLinewidth: 2,
+                    wireframeLinewidth: 2.5,
                     wireframeLinejoin: "round",
                     wireframeLinecap: "round",
-                    side: THREE.BackSide
+                    side: THREE.BackSide,
+                });
+
+                var Material = {
+                    CCP_roi: CCP_Mat,
+                    DL_L_roi: DL_L_Mat,
+                    DL_R_roi: DL_R_Mat,
+                    CCP_pt: CCP_PT_Mat,
+                    DL_R_pt: DL_R_PT_Mat,
+                    DL_L_pt: DL_L_PT_Mat,
+                };
+
+                // GENERATE GEOMETRY FOR IMPORTED DATA
+                // CREATE MESH FOR EACH GEOMETRY
+                var SURFACES = [
+                    "CCP_roi",
+                    "DL_L_roi",
+                    "DL_R_roi",
+                    "CCP_pt",
+                    "DL_R_pt",
+                    "DL_L_pt",
+                ];
+
+                var isolevelConfig = {
+                    CCP_roi: 254,
+                    DL_L_roi: 254,
+                    DL_R_roi: 254,
+                    CCP_pt: 10,
+                    DL_R_pt: 5,
+                    DL_L_pt: 5,
+                };
+
+                var GeometrySpace = {};
+
+                for (let i = 0; i < SURFACES.length; i += 1) {
+                    GeometrySpace[SURFACES[i]] = modifier.modify(
+                        marchingCube(
+                            eval(SURFACES[i]),
+                            isolevelConfig[SURFACES[i]]
+                        )
+                    );
+                    GeometrySpace[SURFACES[i]] = new THREE.Mesh(
+                        GeometrySpace[SURFACES[i]],
+                        Material[SURFACES[i]]
+                    );
+                    raycastedObj.push(GeometrySpace[SURFACES[i]]);
+                    group.add(GeometrySpace[SURFACES[i]]);
+                }
+
+                var BRAIN = marchingCube(dti_data, 8);
+
+                // CCP = modifier.modify(CCP);
+                // CCP_PT = modifier.modify(CCP_PT);
+                // DL_L = modifier.modify(DL_L);
+                // DL_R = modifier.modify(DL_R);
+                // DL_L_PT = modifier.modify(DL_L_PT);
+                // DL_R_PT = modifier.modify(DL_R_PT);
+
+                var brainMaterial = new THREE.MeshBasicMaterial({
+                    opacity: 0.25,
+                    transparent: true,
+                    color: 0x00faca,
+                    side: THREE.BackSide,
                 });
 
                 var brainMesh = new THREE.Mesh(BRAIN, brainMaterial);
-                brainMesh.name = 'BRAIN'
-                var CCPMesh = new THREE.Mesh(CCP, CCPMaterial);
-                CCPMesh.name = "CCP ROI";
-                var CCPPTMesh = new THREE.Mesh(CCP_PT, CCPPTMaterial);
-                CCPPTMesh.name = "CCP PT";
-                var DL_L_Mesh = new THREE.Mesh(DL_L, DL_L_Mat);
-                var DL_R_Mesh = new THREE.Mesh(DL_R, DL_R_Mat);
-                var DL_L_PT_Mesh = new THREE.Mesh(DL_L_PT, DL_L_PT_Mat);
-                var DL_R_PT_Mesh = new THREE.Mesh(DL_R_PT, DL_R_PT_Mat);
-                raycastedObj.push(CCPPTMesh, DL_L_PT_Mesh, DL_R_PT_Mesh);
+                brainMesh.name = "BRAIN";
+
                 group.add(brainMesh);
-                group.add(CCPMesh, DL_L_Mesh, DL_R_Mesh);
-                group.add(CCPPTMesh,DL_L_PT_Mesh,DL_R_PT_Mesh  );
                 console.log(group);
                 scene.add(group);
             }
+
             function VertexInterp(isolevel, p1, p2, valp1, valp2) {
                 let p = new THREE.Vector3();
                 if (Math.abs(isolevel - valp1) < 0.00001) {
