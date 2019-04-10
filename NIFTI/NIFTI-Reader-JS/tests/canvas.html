@@ -249,6 +249,7 @@
             }
 
             function readFile(file) {
+;
                 var blob = makeSlice(file, 0, file.size);
 
                 var reader = new FileReader();
@@ -263,6 +264,7 @@
             }
 
             function handleFileSelect(evt) {
+
                 var files = evt.target.files;
                 readFile(files[0]);
             }

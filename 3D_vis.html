@@ -32,6 +32,7 @@
         <script src="data/DL_R.js"></script>
         <script src="data/DL_L_pt.js"></script>
         <script src="data/DL_R_pt.js"></script>
+       
         <div id="CANVAS" style="position:absolute;left:0px;top: 0px"></div>
 
         <script>
@@ -412,13 +413,15 @@
                     side: THREE.BackSide,
                 });
 
+                
+
                 var Material = {
                     CCP_roi: CCP_Mat,
                     DL_L_roi: DL_L_Mat,
                     DL_R_roi: DL_R_Mat,
                     CCP_pt: CCP_PT_Mat,
                     DL_R_pt: DL_R_PT_Mat,
-                    DL_L_pt: DL_L_PT_Mat,
+                    DL_L_pt: DL_L_PT_Mat
                 };
 
                 // GENERATE GEOMETRY FOR IMPORTED DATA
@@ -429,7 +432,7 @@
                     "DL_R_roi",
                     "CCP_pt",
                     "DL_R_pt",
-                    "DL_L_pt",
+                    "DL_L_pt"
                 ];
 
                 var isolevelConfig = {
@@ -438,7 +441,7 @@
                     DL_R_roi: 254,
                     CCP_pt: 10,
                     DL_R_pt: 5,
-                    DL_L_pt: 5,
+                    DL_L_pt: 5
                 };
 
                 var GeometrySpace = {};
@@ -471,7 +474,7 @@
                 brainMesh.name = "BRAIN";
 
                 group.add(brainMesh);
-                console.log(group);
+                // console.log(group);
                 scene.add(group);
             }
 
